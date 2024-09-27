@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV-Charger Easter-Eggs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
+    <style>
+        .alert p {
+            margin-bottom: 0;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+            background-size: 600% 600%;
+            animation: rainbow 18s linear infinite;
+            display: flex;
+            flex-direction: column;
+            padding: 1em 2em 1em 2em;
+        }
+
+        @keyframes rainbow {
+            0% {
+                background-position: 0 82%;
+            }
+            50% {
+                background-position: 100% 19%;
+            }
+            100% {
+                background-position: 0 82%;
+            }
+        }
+
+        main {
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 32px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <div class="container">
+        <h1>EV-Charger Easter-Eggs</h1>
+        <div class="alert alert-primary" role="alert">
+            <p>Some easter eggs are not accessible since the new app, so here is a website for it! Have fun!</p>
+        </div>
+        <div class="alert alert-info" role="alert">
+            <p>Enter the serial number and the cloud API key of your go-e Charger to trigger the Easter-Egg.</p>
+            <p>After submitting the form, the go-e Charger will have the selected easter-egg enabled.</p>
+        </div>
+        <form class="form" id="easterEggForm">
+            <div class="mb-3">
+                <label for="serial" class="form-label">Serial number:</label>
+                <input type="text" autocomplete="on" id="serial" name="serial" required class="form-control" aria-describedby="serialHelp" placeholder="123456">
+                <div class="form-text" id="serialHelp">You can find the serial number on the sticker on the back of the device.</div>
+            </div>
+            <div class="mb-3">
+                <label for="cloudApiKey" class="form-label">Cloud API key:</label>
+                <input type="text" autocomplete="on" id="cloudApiKey" name="cloudApiKey" required class="form-control" aria-describedby="cloudApiKeyHelp" placeholder="So ein cak aber auch">
+                <div class="form-text" id="cloudApiKeyHelp">You can find the cloud API key in the app in the api settings.</div>
+            </div>
+            <div class="d-flex">
+                <button type="submit" name="led-easter-egg" class="btn btn-primary flex flex-fill" id="triggerLedEasterEgg">
+                    Trigger LED-Easter-Egg
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+<script>
+$(document).ready(function() {
+    $('#easterEggForm').submit(function(e) {
+        e.preventDefault();
+        const serial = $('#serial').val();
+        const cloudApiKey = $('#cloudApiKey').val();
+
+        const easterEggType = e.originalEvent.submitter.name;
+
+        if (!serial || !cloudApiKey) {
+            alert('Please enter the serial number and the cloud API key of your charger.');
+            return;
+        }
+
+        if (!easterEggType) {
+            alert('Please use the button to trigger the LED-Easter-Egg.');
+            return;
+        }
+
+        let data = null;
+
+        switch (easterEggType) {
+            case 'led-easter-egg':
+                data = {
+                    cch: '#2A2A2A',
+                };
+                break;
+            default:
+                alert('Invalid Easter-Egg type.');
+                return;
+        }
+
+        if (!data) {
+            alert('Invalid Easter-Egg data.');
+            return;
+        }
+
+        const searchParameters = new URLSearchParams(data).toString();
+
+        $.ajax({
+            url: `https://${serial}.api.v3.go-e.io/api/set?${searchParameters}`,
+            type: 'GET',
+            headers: {
+                Authorization: `Bearer ${cloudApiKey}`,
+            },
+            success: function () {
+                alert('Easter-Egg triggered successfully.');
+            },
+            error: function (xhr) {
+                let reason = null;
+                try {
+                    const error = JSON.parse(xhr.responseText);
+                    reason = error.reason;
+                } catch (e) {
+                    alert('Failed to trigger the Easter-Egg. Please check the serial number and the cloud API key.');
+                    return;
+                }
+
+                alert('Failed to trigger the Easter-Egg: ' + reason);
+            },
+        });
+    });
+});
+</script>
+</html>
